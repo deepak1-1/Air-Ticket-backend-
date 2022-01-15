@@ -3,15 +3,13 @@ const router = express.Router()
 const adminController = require('../controllers/adminController');
 
 
-router.get('/admin-page', adminController.getAdminPage);
+router.get('/check-admin', adminController.checkAdmin);
 
-router.get('/count-today', adminController.getFlightAndBookingCount);
-
-router.get('/admin-count', adminController.getAdminCount);
+router.get('/count-today', adminController.getTodayCount);
 
 router.post('/add-admin', adminController.addAdmin);
 
-router.post('/add-route', adminController.addRoute);
+router.post('/add-flight-route', adminController.addRoute);
 
 router.get('/get-destinations', adminController.getPlaces);
 
@@ -20,5 +18,13 @@ router.post('/my-data', adminController.getMyData);
 router.post('/schedule-flight', adminController.scheduleFlight);
 
 router.get('/get-route-data', adminController.getRouteData);
+
+router.post('/update-password', adminController.updatePassword);
+
+router.get('/get-flight-routes', adminController.getFlightRoutes);
+
+router.post('/update-flight-route', adminController.UpdateFlightRoute);
+
+router.post('/delete-flight-route', adminController.DeleteFlightRoute);
 
 module.exports = router;

@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 // ****************** Some Usefull functions ********************************
 
 const email_exp = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-      password_exp = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
+      password_exp = /.{6,}$/;
 
 function regex_check( regex_exp, input_string ){
 
@@ -20,14 +20,6 @@ function regex_check( regex_exp, input_string ){
 function createtoken( id, key){
 
     return jwt.sign( {id}, key )
-}
-
-function passwordMatchCheck( password, confirm_password ){
-    
-    if( password === confirm_password)
-        return true;
-    else 
-        return false;
 }
 
 function genrateCode(){
@@ -204,7 +196,6 @@ const login = async (req, res) => {
 
 const send_code = (req, res)=>{
 
-    console.log(req.body);
     let model;
     if(req.body.data === 'admin')
         model = adminModel;
@@ -222,19 +213,22 @@ const send_code = (req, res)=>{
             transporter.sendMail( mailOptions, (err, info)=> {
                 if(err){
                     console.log(err);
+                    res.send( {codeSended: false, exists:true } );
                 } else {
-                    res.send( {codeSended: beforeVerificationCode } );
+                    res.send( {codeSended: beforeVerificationCode, exists:true } );
                 }
             })
 
         } else {
-            res.send({codeSended: false})
+            res.send({codeSended: false, exists:false})
         }
     
     } )
 }
 
 const update_password = async (req, res)=>{
+
+    console.log(req.body)
 
     if(regex_check(email_exp, req.body.email) && regex_check(password_exp, req.body.password)){
         const salt = await bcrypt.genSalt(10);
@@ -268,9 +262,9 @@ const login_admin = (req, res)=>{
 
                     if(result == true){
 
-                        const token = createtoken( user.id, 'Admin_Login' )
-                        res.cookie('jwtAdmin', token , {maxAge:10000000000000});
-                        res.send({error: false, password: true, email: true})
+                        console.log(user);
+                        const token = createtoken( user.id, 'ADMIN_TOKEN' )
+                        res.send({error: false, password: true, email: true, token})
                     
                     } else {
                     

@@ -1,23 +1,37 @@
 const jwt = require('jsonwebtoken');
-
+const adminModel = require('../models/admin');
 
 const checkAdmin = (req, res, next) =>{
 
-    const token = req.cookies.jwt;
-	console.log('INSIDE VALIDATION')
-    if(token){
-		console.log(token);
-		jwt.verify(token, 'Admin_Login', (err, decodedToken)=>{
-			if(err){
-				console.log(err);
-				res.send({valid: false})
+	try{
+		let token = req.headers.token;
+		if(token){
+			
+			const decodedToken = jwt.verify(token, "ADMIN_TOKEN");
+			if(decodedToken){
+				adminModel.findOne({_id: decodedToken.id}, ( err, admin)=>{
+					if(err){
+						console.log(err);
+						res.send({login: false});
+					}
+					if(admin){
+						req.body.adminId = decodedToken.id;
+						next()
+					}else {
+						res.send({login: false})
+					}
+					
+				})
 			} else {
-				next();
+				res.send({ login: false });
 			}
-		})
-	} else {
-		console.log("INVALID TOKEN");
-		res.send({valid: false});
+		} else {
+			res.send({ login: false });
+		}
+	} catch(error){
+		console.log(error);
+		console.log('Isnide error else');
+		res.send({login: false});
 	}
 }
 

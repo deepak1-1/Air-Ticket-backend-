@@ -7,21 +7,19 @@ const usefulData = require('../useful/functions');
 const routeModel = require('../models/planeRoute');
 
 
-const getAdminPage = (req, res)=>{
-    console.log("Inside ADMIN HOME PAGE!");
-    res.send({valid: true});
+const checkAdmin = (req, res)=>{
+    res.send({login: true});
 }
 
-const getFlightAndBookingCount = (req, res)=>{
+const getTodayCount = (req, res)=>{
     
-    // bookingModel.find({dateTimeStart:})
     let dateNow = new Date();
     dateNow = dateNow.toDateString();
 
     flightSchedulingModel.find({date: dateNow})
         .then(result => {
             
-            const data = {flight: 0, booking: 0};
+            const data = {flight: 0, booking: 0, admin: 0, login:true };
             data.flight = result.length;
 
             if(data.flight !== 0){
@@ -34,47 +32,50 @@ const getFlightAndBookingCount = (req, res)=>{
                     
                     // when loop overs
                     if(index === (array.length-1)){
-                        res.send({data});
+                        adminModel.find((err, admins)=>{
+                            if(err)
+                                console.log(err);
+                            data.admin = admins.length;
+                            res.send(data)
+                        });
                     }
 
                 })
             } else {
-                res.send({data});
+                adminModel.find((err, admins)=>{
+                    if(err)
+                        console.log(err);
+                    data.admin = admins.length;
+                    res.send(data);
+                });
             }
         })
 }
 
-const getAdminCount = (req, res)=>{
-    
-    adminModel.find()
-        .then(result => {
-            const data = result.length
-            res.send({data});
-        })
-}
 
 const addAdmin = async (req, res)=>{
 
     const data = req.body;
+    console.log(data);
     if(usefulData.regex_check(usefulData.email_exp, data.email) && 
        usefulData.regex_check(usefulData.mobile_exp, data.mobile) &&
-       usefulData.regex_check(usefulData.adharCard_exp, data.adharCard) && 
+       usefulData.regex_check(usefulData.adharCard_exp, data.adharcard) && 
        data.name.trim().length !== 0){
 
         const checkEmail = await adminModel.findOne({email: req.body.email});
         const checkNumber = await adminModel.findOne({mobile: req.body.mobile});
 
         if(checkEmail){
-            res.send({found:'email', added: false});
+            res.send({error:'email'});
         } else {
 
             if(checkNumber){
-                res.send({found:'mobile', added:false});
+                res.send({error:'mobile'});
             } else {
                 
                 let name = data.name.toLowerCase();                 
                 let  createdPassword = "";
-                createdPassword = createdPassword.concat(name.substr(0, 4), "@", data.adharCard.slice(8,13));
+                createdPassword = createdPassword.concat(name.substr(0, 4), "@", data.adharcard.slice(8,13));
 
                 const salt = await bcrypt.genSalt(10);
                 const hashPassword = await bcrypt.hash(createdPassword, salt);
@@ -84,15 +85,16 @@ const addAdmin = async (req, res)=>{
                     email: data.email,
                     mobile: data.mobile,
                     password: hashPassword,
-                    adharCard: data.adharCard
+                    adharcard: data.adharcard
                 })
 
                 addAdmin.save()
                     .then(result => {
-                        res.send({found: false, added: true});
+                        res.send({error: false, login:true });
                     })
                     .catch(err => {
-                        res.send({Error: 'Some error'});
+                        console.log(err);
+                        res.send({error: 'Some error', login:true });
                     })
             }
         }
@@ -108,25 +110,25 @@ const addRoute = async (req, res)=>{
     const data = req.body;
     data.place1 = data.place1.toUpperCase();
     data.place2 = data.place2.toUpperCase();
-    data.km = Number(data.km);
-
-    if(data.place1.trim().length !== 0 && data.place2.trim().length !== 0 && data.km){
+    data.distance = Number(data.distance);
+    
+    if(data.place1.trim().length !== 0 && data.place2.trim().length !== 0 && data.distance){
 
         const check1 = await routeModel.findOne({place1: data.place1, place2: data.place2})
         const check2 = await routeModel.findOne({place1: data.place2, place2: data.place1})
 
         if(check1){
-            res.send({exists: true, added: false});
+            res.send({exists: true, added: false,  login:true });
         } else {
             if(check2){
-                res.send({exists: true, added: false})
+                res.send({exists: true, added: false, login:true })
             } else {
 
                 const routeRegister = routeModel(data);
 
                 routeRegister.save()
                     .then(result => {
-                        res.send({exists: false, added: true});
+                        res.send({exists: false, added: true, login:true });
                     })
 
             }
@@ -141,7 +143,8 @@ const getPlaces = async (req, res) => {
     
     const sendData = {
         distanceList: [],
-        nameList: []
+        nameList: [],
+        login:true 
     }
     const data = await routeModel.find();
 
@@ -175,11 +178,11 @@ const getMyData = (req, res) =>{
         
         adminModel.findOne({_id: id})
             .then(result =>{
-                res.send({error: false, data: result});
+                res.send({error: false, data: result,  login:true });
             })
             .catch(err => {
                 console.log(err);
-                res.send({error: err, data: false});
+                res.send({error: err, data: false,  login:true });
             })
 
     } else { res.sendStatus(500); }
@@ -194,11 +197,11 @@ const scheduleFlight = (req, res) =>{
              (err, findResult) => {
                  
                  if(err){
-                     res.send({error: err, alreadyExists: false, scheduled: false});
+                     res.send({error: err, alreadyExists: false, scheduled: false,  login:true });
                  } 
 
                  if(findResult){
-                     res.send({error: false, alreadyExists: true, scheduled: false});
+                     res.send({error: false, alreadyExists: true, scheduled: false,  login:true });
                  } else {
 
                     const register = flightSchedulingModel({
@@ -216,10 +219,10 @@ const scheduleFlight = (req, res) =>{
                     register.save()
                         .then(saveResult => {
                             
-                            res.send({error: false, alreadyExists: false, scheduled: true});
+                            res.send({error: false, alreadyExists: false, scheduled: true,  login:true });
                         })
                         .catch(error=>{
-                            res.send({error: error, alreadyExists: false, scheduled: true});
+                            res.send({error: error, alreadyExists: false, scheduled: true,  login:true });
                         })
                  }
              } )
@@ -229,22 +232,115 @@ const getRouteData = (req, res)=>{
 
     routeModel.find()
     .then(result => {
-        res.send({result, error: false, valid: true});
+        res.send({result, error: false, valid: true, login:true});
     })
     .catch(err => {
         console.log(err);
-        res.send({result:false, error: false, valid: true});
+        res.send({result:false, error: false, valid: true, login:true});
+    })
+}
+
+const updatePassword = async (req, res) =>{
+
+    const data = req.body;
+
+    adminModel.findOne({_id:data.adminId}, (err, admin)=>{
+        if(err){
+            console.log(err);
+            res.send({error: "some error", login: true});
+        }
+        
+        if(admin){
+
+            bcrypt.compare(data. oldpassword, admin.password, async (err, result)=>{
+                if(result){
+                    
+                    const salt = await bcrypt.genSalt(10);
+                    const hashPassword = await bcrypt.hash(data.newpassword, salt);
+
+                    adminModel.updateOne({_id: data.adminId}, 
+                                            {password: hashPassword},
+                                            {upsert: false}, (err, updated)=>{
+                            
+                            if(err){
+                                console.log(err);
+                                res.send({error: "Some error", login: true});
+                            } else {
+                                if(updated.modifiedCount){
+                                    res.send({error: false, login: true});
+                                } else {
+                                    res.send({error: "unable to Updated", login: true});
+                                }
+                            }
+                    })
+
+                }  else {
+                    res.send({error: "Current password wrong", login: true});
+                }
+            })
+        } else {
+            res.send({error: "don't exists ", login: true});
+        }
+    })
+    
+                
+}
+
+
+const getFlightRoutes = (req, res) => {
+
+    routeModel.find((err, data)=>{
+        if(err){
+            console.log(err);
+            res.send({data:[], login:true});
+        } else {
+            res.send({data, login:true});
+        }
+    });
+}
+
+const UpdateFlightRoute = (req, res) =>{
+
+    const data = req.body;
+    
+    routeModel.updateOne({_id:data.id}, {place1:data.place1, place2: data.place2, distance: data.distance}, (err, update)=>{
+
+        if(err){
+            console.log(err);
+            res.send({error: true, modified: false, login:true});
+        } else {
+            if(update.modifiedCount){
+                res.send({error:false, modified: true, login:true});
+            } else {
+                res.send({error:false, modified: false, login:true});
+            }
+        }
+    })
+}
+
+const DeleteFlightRoute = (req, res) => {
+
+    routeModel.remove({_id: req.body.id}, (err, data)=>{
+        if(err){
+            console.log(err);
+            res.send({done: false, login:true});
+        } else {
+            res.send({done: true, login:true});
+        }
     })
 }
 
 module.exports = {
-    getAdminPage,
-    getFlightAndBookingCount,
-    getAdminCount,
+    checkAdmin,
+    getTodayCount,
     addAdmin,
     addRoute,
     getPlaces,
     getMyData,
     scheduleFlight,
-    getRouteData
+    getRouteData,
+    updatePassword,
+    getFlightRoutes,
+    UpdateFlightRoute,
+    DeleteFlightRoute
 }

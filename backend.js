@@ -14,18 +14,8 @@ const app = express();
 
 const db = mongoose.connection;
 
-// app.use(session({
-//     secret: "sdjfhkdfjdkjfsdfsd3874bfsdfsdfj",
-//     resave: false,
-//     saveUninitialized: true,
-//     store: new MongoStore({
-//         mongooseConnection: db
-//     })
-// }))
-
-
 // connection to database
-const dbURI = 'mongodb://localhost:27017/Air_ticket'
+const dbURI = 'mongodb+srv://deepak_121:deepak_121@cluster0.z7bhc.mongodb.net/Air_ticket?retryWrites=true&w=majority'
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then((result)=>{
 
@@ -50,8 +40,4 @@ app.use(express.static('public'));
 
 app.use('', indexRouter);
 
-app.use('/admin',  adminRouter);
-
-// app.get('/admin-login-try', (req, res)=>{
-//     console.log(req.body)
-// })
+app.use('/admin', auth.checkAdmin, adminRouter);

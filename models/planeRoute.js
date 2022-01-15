@@ -10,7 +10,7 @@ const routeSchema = new Schema({
         type: String,
         required: true
     },
-    km: {
+    distance: {
         type: Number,
         required: true
     },

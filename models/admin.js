@@ -20,7 +20,7 @@ const adminSchema = new Schema({
         required: true,
         unique: true
     },
-    adharCard: {
+    adharcard: {
         type: String,
         required: true,
         unique: true
