@@ -7,6 +7,7 @@ const MongoStore = new require('connect-mongo')(session); // npm install connect
 const cors = require("cors");
 const indexRouter = require('./routes/index.js');
 const adminRouter = require('./routes/admin.js');
+const userRouter = require('./routes/user.js');
 const cookieParser = require('cookie-parser');
 const auth = require('./auth/authentication');
 
@@ -41,3 +42,5 @@ app.use(express.static('public'));
 app.use('', indexRouter);
 
 app.use('/admin', auth.checkAdmin, adminRouter);
+
+app.use('/user', auth.checkUser, userRouter);

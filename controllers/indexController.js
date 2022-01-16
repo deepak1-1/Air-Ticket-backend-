@@ -66,29 +66,9 @@ const check_user = (req, res) => {
 const register_user = async (req, res) => {
     
     const data = req.body;
-    let emailPass = false, namePass = false, passwordPass = false, confirmPasswordPass = false;
 
-    if(data.email.trim().length !== 0 && regex_check( email_exp, data.email) )
-        emailPass = true;
-    else 
-        emailPass = 'Either email is empty or not valid!';
-    
-    if(data.name.trim().length !== 0)
-        namePass = true;
-    else
-        namePass = 'Name can\'t be empty';
-
-    if(data.password.trim().length !== 0 && regex_check( password_exp, data.password)){
-        passwordPass = true;
-        if( data.password === data.confirm_password)
-            confirmPasswordPass = true;
-        else 
-            confirmPasswordPass = 'Password don\'t match!';
-    } else {
-        passwordPass = 'Password should be 6 to 20 characters which contain at least one numeric digit, one uppercase and one lowercase letter';
-    }
-
-    if(namePass && emailPass && passwordPass && confirmPasswordPass){
+    if(req.body.name && regex_check(email_exp, req.body.email) && 
+        regex_check(password_exp, req.body.password)){
 
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(data.password, salt);
@@ -102,60 +82,22 @@ const register_user = async (req, res) => {
         register.save()
                 .then(result => {
                     if(result){
-                        res.send({
-                            email: emailPass,
-                            name: namePass,
-                            password: passwordPass,
-                            confirm_password: confirmPasswordPass,
-                            redirect: '/login',
-                            error: false 
-                        })
+                        res.send({added: true, email: false, error: false});
                     } else {
-                        res.send({
-                            email: emailPass,
-                            name: namePass,
-                            password: passwordPass,
-                            confirm_password: confirmPasswordPass,
-                            redirect: false,
-                            error: false 
-                        })
+                        res.send({added: false, email: false, error: "Unable to register!"});
                     }
                 })
                 .catch(err=>{
                     
-                    console.log("Error While Registering user: "+err.message);
-
+                    console.log("Error While Registering user: "+err.message, err.code);
                     if(err.code === 11000){
-                        res.send({
-                            email: emailPass,
-                            name: namePass,
-                            password: passwordPass,
-                            confirm_password: confirmPasswordPass,
-                            redirect: false,
-                            error: 'Email already Exists!'
-                        })
+                        res.send({added: false, email: true, error: false});
                     } else {
-                        res.send({
-                            email: emailPass,
-                            name: namePass,
-                            password: passwordPass,
-                            confirm_password: confirmPasswordPass,
-                            redirect: false,
-                            error: err.message
-                        })
+                        res.send({added: false, email: false, error: "Some Error"});
                     }
-                })
 
-    } else {
-        res.send({
-            email: emailPass,
-            name: namePass,
-            password: passwordPass,
-            confirm_password: confirmPasswordPass,
-            redirect: false,
-            error: false
-        })
-    }
+                })
+        }
 }
 
 
@@ -173,18 +115,18 @@ const login = async (req, res) => {
 
                     if(result == true){
 
-                        // req.session.userId = user._id.toString();
-                        res.send({error: false, password: true, email: true})
+                        const token = createtoken( user.id, 'USER_TOKEN' );
+                        res.send({password: true, email: true, token});
                     
                     } else {
                     
-                        res.send({error: 'Password is incorrect!', password: false, email: true});
+                        res.send({ password: false, email: true});
                     
                     }
                 })
 
             } else {
-                res.send({error: 'No user with this email!', password: false, email: false});
+                res.send({ password: false, email: false});
             }
 
         })
@@ -262,7 +204,6 @@ const login_admin = (req, res)=>{
 
                     if(result == true){
 
-                        console.log(user);
                         const token = createtoken( user.id, 'ADMIN_TOKEN' )
                         res.send({error: false, password: true, email: true, token})
                     
