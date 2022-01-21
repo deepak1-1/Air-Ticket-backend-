@@ -16,5 +16,8 @@ router.post('/login-admin', indexControllers.login_admin);
 
 router.post('/update-password-admin', indexControllers.update_admin_password);
 
+router.post('/google/register', indexControllers.handle_google_register);
+
+router.post('/google/login', indexControllers.handle_google_login);
 
 module.exports = router;

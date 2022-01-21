@@ -139,7 +139,7 @@ const addRoute = async (req, res)=>{
     }
 }
 
-const getPlaces = async (req, res) => {
+const getDestinations = async (req, res) => {
     
     const sendData = {
         distanceList: [],
@@ -335,7 +335,7 @@ module.exports = {
     getTodayCount,
     addAdmin,
     addRoute,
-    getPlaces,
+    getDestinations,
     getMyData,
     scheduleFlight,
     getRouteData,

@@ -11,7 +11,7 @@ router.post('/add-admin', adminController.addAdmin);
 
 router.post('/add-flight-route', adminController.addRoute);
 
-router.get('/get-destinations', adminController.getPlaces);
+router.get('/get-destinations', adminController.getDestinations);
 
 router.post('/my-data', adminController.getMyData);
 
