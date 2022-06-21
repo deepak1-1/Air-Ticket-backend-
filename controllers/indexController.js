@@ -138,6 +138,7 @@ const login = async (req, res) => {
     }
 }
 
+
 const send_code = (req, res)=>{
 
     let model;
@@ -149,7 +150,7 @@ const send_code = (req, res)=>{
     model.findOne({email: req.body.email}, (err, data) =>{
         
         if(data){
-
+            console.log(data);
             beforeVerificationCode = genrateCode();
             mailOptions.text = `Your verification code is ${beforeVerificationCode}`;
             mailOptions.to = req.body.email;
@@ -169,6 +170,7 @@ const send_code = (req, res)=>{
     
     } )
 }
+
 
 const update_password = async (req, res)=>{
 
@@ -248,7 +250,7 @@ const update_admin_password = async (req, res)=>{
 }
 
 
-const handle_google_register = async (req, res) =>{
+const google_auth = async (req, res) => {
 
     const { token, googleId } = req.body;
 
@@ -257,48 +259,12 @@ const handle_google_register = async (req, res) =>{
         audience: process.env.CLIENT_ID
     });
     const { name, email } = ticket.getPayload();
-    
-    const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(googleId, salt);
 
-    const register = userModel({
-        name: name,
-        email: email,
-        password: hashPassword
-    })
-    
-    register.save()
-        .then(result => {
-            if(result){
-                res.send({added: true, email: false, error: false});
-            } else {
-                res.send({added: false, email: false, error: "Unable to register!"});
-            }
-        })
-        .catch(err=>{
-            
-            console.log("Error While Registering user: "+err.message, err.code);
-            if(err.code === 11000){
-                res.send({added: false, email: true, error: false});
-            } else {
-                res.send({added: false, email: false, error: "Some Error"});
-            }
+    userModel.findOne({email: email}, async (err, user) => {
 
-        })
-
-}
-
-const handle_google_login = async (req, res) => {
-
-    const { token, googleId } = req.body;
-
-    const ticket = await client.verifyIdToken({
-        idToken: token,
-        audience: process.env.CLIENT_ID
-    });
-    const { email } = ticket.getPayload();
-
-    userModel.findOne({email: email}, (err, user) => {
+        if(err){
+            res.send({password: false, email: false, added: false, error: err})
+        }
 
         if(user){
 
@@ -307,17 +273,41 @@ const handle_google_login = async (req, res) => {
                 if(result == true){
 
                     const token = createtoken( user.id, 'USER_TOKEN' );
-                    res.send({password: true, email: true, token});
+                    res.send({password: true, email: true, added: false, error: false, token});
                 
                 } else {
                 
-                    res.send({ password: false, email: true});
+                    res.send({ password: false, email: true, added: false, error: false});
                 
                 }
             })
 
         } else {
-            res.send({ password: false, email: false});
+            
+            const salt = await bcrypt.genSalt(10);
+            const hashPassword = await bcrypt.hash(googleId, salt);
+
+            const register = userModel({
+                name: name,
+                email: email,
+                password: hashPassword
+            })
+
+            register.save()
+                    .then(result => {
+                        if(result){
+                            const token = createtoken( result.id, 'USER_TOKEN' );
+                            res.send({added: true, email: false, password:false, error: false, token});
+                        } else {
+                            res.send({added: false, email: false, password:false, error: "Unable to register!"});
+                        }
+                    })
+                    .catch(err=>{
+                        
+                        console.log("Error While Registering user: "+err.message, err.code);
+                        res.send({added: false, email: false, error: "Some Error"});
+
+                    })
         }
 
     })
@@ -332,6 +322,5 @@ module.exports = {
     update_password,
     login_admin,
     update_admin_password,
-    handle_google_register,
-    handle_google_login
+    google_auth
 };

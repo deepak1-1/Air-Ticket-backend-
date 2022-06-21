@@ -17,6 +17,8 @@ const db = mongoose.connection;
 
 // connection to database
 const dbURI = 'mongodb+srv://deepak_121:deepak_121@cluster0.z7bhc.mongodb.net/Air_ticket?retryWrites=true&w=majority'
+// const dbURI = 'mongodb+srv://x:Kx2R7eVCyDVFp6RT@cluster0.z7bhc.mongodb.net/testing?retryWrites=true&w=majority'
+// const dbURI = 'mongodb+srv://root:Kx2R7eVCyDVFp6RT@cluster0.jaxiw.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
 mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then((result)=>{
 
